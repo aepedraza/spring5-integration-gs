@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.validation.Valid;
+import java.time.OffsetDateTime;
 
 @Controller
 @RequestMapping("/")
@@ -45,7 +46,10 @@ public class RegistrationController {
 
         // Prefer classes from org.springframework.messaging.support. instead of org.springframework.integration.support
         // The last are present for backwards compatibility
-        Message<AttendeeRegistration> message = MessageBuilder.withPayload(registration).build();
+        Message<AttendeeRegistration> message = MessageBuilder
+                .withPayload(registration)
+                .setHeader("dateTime", OffsetDateTime.now())
+                .build();
 
         registrationRequestChannel.send(message);
 
