@@ -1,9 +1,13 @@
 package com.pluralsight.demo.web;
 
 import com.pluralsight.demo.model.AttendeeRegistration;
-import com.pluralsight.demo.service.RegistrationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +22,14 @@ import javax.validation.Valid;
 public class RegistrationController {
     private static final Logger LOG = LoggerFactory.getLogger(RegistrationController.class);
 
-    private final RegistrationService registrationService;
+    private final MessageChannel registrationRequestChannel;
 
-    public RegistrationController(RegistrationService registrationService) {
-        this.registrationService = registrationService;
+    public RegistrationController(@Qualifier("registrationRequest") MessageChannel registrationRequestChannel) {
+        this.registrationRequestChannel = registrationRequestChannel;
     }
+
+    @Autowired
+
 
     @GetMapping
     public String index(@ModelAttribute("registration") AttendeeRegistration registration) {
@@ -36,7 +43,11 @@ public class RegistrationController {
             return "index";
         }
 
-        registrationService.register(registration);
+        // Prefer classes from org.springframework.messaging.support. instead of org.springframework.integration.support
+        // The last are present for backwards compatibility
+        Message<AttendeeRegistration> message = MessageBuilder.withPayload(registration).build();
+
+        registrationRequestChannel.send(message);
 
         return "success";
     }
