@@ -4,9 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class GlobomanticsRegistrationApplication {
+public class GlobomanticsWebApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(GlobomanticsRegistrationApplication.class, args);
+        SpringApplication.run(GlobomanticsWebApplication.class, args);
     }
 }
