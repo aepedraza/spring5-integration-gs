@@ -12,6 +12,7 @@ import com.pluralsight.demo.database.TicketPriceRepository;
 import com.pluralsight.demo.database.TicketType;
 import com.pluralsight.demo.database.TicketTypeRepository;
 import com.pluralsight.demo.model.AttendeeRegistration;
+import com.pluralsight.demo.model.RegistrationEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class RegistrationService {
         this.ticketTypeRepository = ticketTypeRepository;
     }
 
-    public void register(AttendeeRegistration registration) {
+    public RegistrationEvent register(AttendeeRegistration registration) {
         LOG.debug("Registration received for: {}", registration.getEmail());
 
         Attendee attendee = createAttendee(registration);
@@ -63,6 +64,8 @@ public class RegistrationService {
 
         attendeeTicketRepository.save(attendeeTicket);
         LOG.debug("Registration saved, ticket code: {}", attendeeTicket.getTicketCode());
+
+        return registrationEvent(attendeeTicket, attendee);
     }
 
     private Attendee createAttendee(AttendeeRegistration registration) {
@@ -86,5 +89,16 @@ public class RegistrationService {
 
         return ticketPriceRepository.findByTicketTypeAndPricingCategory(ticketType, pricingCategory)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot determine ticket price for ticket type '" + ticketType.getCode() + "' and pricing category '" + pricingCategory.getCode() + "'"));
+    }
+
+    private RegistrationEvent registrationEvent(AttendeeTicket ticket, Attendee attendee) {
+        RegistrationEvent event = new RegistrationEvent();
+        event.setTicketType(ticket.getTicketPrice().getTicketType().getCode());
+        event.setTicketPrice(ticket.getNetPrice());
+        event.setTicketCode(ticket.getTicketCode());
+        event.setAttendeeFirstName(attendee.getFirstName());
+        event.setAttendeeLastName(attendee.getLastName());
+        event.setAttendeeEmail(attendee.getEmail());
+        return event;
     }
 }

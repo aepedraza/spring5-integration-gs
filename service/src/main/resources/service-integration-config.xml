@@ -24,6 +24,9 @@
     <int:service-activator
         input-channel="registrationRequest"
         ref="registrationService"
-        method="register" />
+        method="register"
+        output-channel="registrationEvent"/>
+    
+    <int:publish-subscribe-channel id="registrationEvent"/>
 
 </beans>
