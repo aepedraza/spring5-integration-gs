@@ -27,6 +27,7 @@
         <module>model</module>
         <module>service</module>
         <module>web</module>
+        <module>billing</module>
     </modules>
 
 </project>
