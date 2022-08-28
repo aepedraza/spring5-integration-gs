@@ -12,9 +12,17 @@
             http://www.springframework.org/schema/integration/mail https://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
             http://www.springframework.org/schema/integration/http https://www.springframework.org/schema/integration/http/spring-integration-http.xsd">
 
+    <!-- Inbound channel adapter which receives messages from RabbitMQ -->
+    <!-- channel-transacted=true: transaction lasts through all the flow starting from the inbound channel adapter -->
+    <!-- transaction-manager=transactionManager: manager is the same used for JPA -->
+    <!-- error-handler: custom handler to indicate RabbitMQ to not retransmit NAK messages -->
+    <!-- Need to add a dead letter exchange/queue in RabbitMQ to avoid spinning and sending continuous confirmation mails -->
     <int-amqp:inbound-channel-adapter
             queue-names="globomantics.registrationRequest"
-            channel="fromRabbit"/>
+            channel="fromRabbit"
+            error-handler="registrationErrorHandler"
+            channel-transacted="true"
+            transaction-manager="transactionManager"/>
 
     <int:channel id="fromRabbit"/>
 
