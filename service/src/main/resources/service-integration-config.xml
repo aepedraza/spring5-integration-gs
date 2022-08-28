@@ -12,11 +12,22 @@
             http://www.springframework.org/schema/integration/mail https://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
             http://www.springframework.org/schema/integration/http https://www.springframework.org/schema/integration/http/spring-integration-http.xsd">
 
+    <!-- Inbound channel adapter which receives messages from RabbitMQ -->
     <int-amqp:inbound-channel-adapter
             queue-names="globomantics.registrationRequest"
             channel="fromRabbit"/>
 
-    <int:channel id="fromRabbit"/>
+    <!-- Task executor: With this component, sender and receiver run in different threads -->
+    <bean id="registrationTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="1"/>
+        <property name="maxPoolSize" value="8"/>
+        <property name="threadNamePrefix" value="TaskExecutor-"/>
+    </bean>
+
+    <int:channel id="fromRabbit">
+        <!-- Setting a task executor makes this an ExecutorChannel instead of a DirectChannel -->
+        <int:dispatcher task-executor="registrationTaskExecutor"/>
+    </int:channel>
 
     <int:json-to-object-transformer
             input-channel="fromRabbit"
@@ -60,5 +71,17 @@
         <!-- Outbound channel adapter for sending HTTP request (automatically converts payload to JSON) -->
         <int-http:outbound-channel-adapter url="http://localhost:8083" http-method="POST"/>
     </int:chain>
+
+    <!-- Sample router to manage error messages based on exception thrown by flow's components -->
+    <int:exception-type-router input-channel="errorChannel">
+        <int:mapping exception-type="org.springframework.dao.DataAccessException" channel="dataAccessError"/>
+        <int:mapping exception-type="org.springframework.mail.MailSendException" channel="mailSendError"/>
+        <int:mapping exception-type="org.springframework.web.client.ResourceAccessException" channel="resourceAccessError"/>
+    </int:exception-type-router>
+
+    <!-- This channels should be subscribed by component which manages errors -->
+    <int:channel id="dataAccessError"/>
+    <int:channel id="mailSendError"/>
+    <int:channel id="resourceAccessError"/>
 
 </beans>
